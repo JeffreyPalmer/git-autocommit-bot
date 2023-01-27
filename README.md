@@ -27,14 +27,10 @@ When a file is created:
 
    
 # Required Tools
-- [Entr](https://eradman.com/entrproject/) - Runs arbitrary commands when files changes
 - [fswatch](https://emcrisostomo.github.io/fswatch/) - Cross-platform filesystem change watcher
 - [Rsync](https://rsync.samba.org/) - Synchronizes different directories
 
-# Things to Figure Out
-- How to create a disconnected branch
-- How to create a commit and attach it to a branch that's not HEAD
-- How to always create a commit, even if no files have changed (empty-commit?)
+Probably need to have `homebrew` installed in order to easily get these.
 
 # How to Set Things Up
 
@@ -80,7 +76,16 @@ rsync -a --verbose --exclude='.git/' --filter=':- .gitignore' ~/src/personal/gen
 Should I use a bare repository? 
 
 No - this comes with some unexpected issues regarding fetching (see [this blog
-  bost](https://morgan.cugerone.com/blog/workarounds-to-git-worktree-using-bare-repository-and-cannot-fetch-remote-branches/)
+
+This command will create a repository worktree in a dedicated directory, with a new branch name 'autocommits': 
+ 
+``` sh
+git worktree add ../autocommit-repos/vera-examples-watcher -b autocommits
+```
+
+(The `-b` may need to be omitted if the branch already exists.)
+
+ bost](https://morgan.cugerone.com/blog/workarounds-to-git-worktree-using-bare-repository-and-cannot-fetch-remote-branches/)
   for details)
   
 Maybe recommend a separate directory for all of the change tracking worktree
@@ -102,7 +107,7 @@ Create a (possibly empty) commit on the current branch by automatically
 committing all changes.
 
 ``` sh
-git commit -a --allow-empty -m 'message'
+git commit --all --allow-empty --message 'message'
 ```
 
 # How to run this
