@@ -1,3 +1,6 @@
+# Git Autocommit Bot
+A tool for generative artists to automatically record ephemeral image sources.
+
 # What is this?
 This tool watches a specified directory for the creation of files with names
 that match a specified pattern, and then automatically creates a git commit in a
@@ -5,12 +8,16 @@ source repository that represents the code that created that file.
 
 I use this while creating generative art projects so that each output created
 during the development process can be tracked back to a specific code/hash
-combination, allowing me to easily recreate them as needed. Since I'm only using
-the filename as the commit message, I put the random number seed into the
-filename so that it's automatically included in the commit message.
+combination, allowing me to easily recreate them as needed. 
+
+NOTE: Since this only uses the filename as the commit message, be sure to put
+the random number seed (and anything else you need to retain) into the filename
+so that it's automatically included in the commit message.
 
 This is a very basic set of shell scripts, but it solves my specific problem.
 YMMV.
+
+NOTE: Only tested on MacOS! Other platforms may require changes.
 
 # Required Tools
 - [git](https://git-scm.com/) - Source code version control system
@@ -21,18 +28,9 @@ YMMV.
 If you're on MacOS, you can use [`homebrew`](https://brew.sh/) to easily get
 these via `brew install git fswatch rsync`.
 
-# Why?
-I created this instead of using an existing tool like
-[dura](https://github.com/tkellogg/dura) for two reasons:
-
-1. I want a specific type of git history to be created for snapshots that was
-   separate from my actual development commit history.
-2. I like to tinker, and I had a feeling that this was possible with some simple
-   shell script glue.
-
 # How to Use
 
-1. Clone this repository.
+1. Clone this repository onto your machine.
 2. Create a [git worktree](https://git-scm.com/docs/git-worktree) branch of your
    in-development repository that will be used to record snapshots. I typically
    create a directory that contains all such repositories, so that they're out
@@ -40,19 +38,20 @@ I created this instead of using an existing tool like
    
    For example, if I have a development repository at
    `~/src/genart/my-new-project`, I create a directory called
-   `~/src/autocommit-repos` that I use to store all of my active worktrees.
+   `~/src/autocommit-repos` that I use to store all of my active autocommit
+   worktrees.
    
-   Once you have a place to create your autocommit worktree, you can create it
-   like this:
+   Once you have a place to create your autocommit worktree, create it like
+   this:
 
    ``` sh
    cd ~/src/genart/my-new-project
    git worktree add ~/src/autocommit-repos/my-new-project-autocommits -b autocommits
    ```
 
-   This command creates an active git worktree of your current repository in the
-   directory `~/src/autocommit-repos/my-new-project-autocommits` and checks out
-   the branch `autocommits` in that repository. (You can name the branch
+   This command creates an active git worktree for your current repository in
+   the directory `~/src/autocommit-repos/my-new-project-autocommits` and checks
+   out the branch `autocommits` in that repository. (You can name the branch
    whatever you want - just be sure that it's different from your active branch
    name.)
 3. Go into this new directory and run the watcher script, providing a regular
@@ -64,7 +63,7 @@ I created this instead of using an existing tool like
 
    ``` sh
    cd ~/src/autocommit-repos/my-new-project-autocommits
-   ~/src/personal/git-autocommit-bot/watch.sh -r 'wip-.*.png$' ~/Downloads
+   ~/src/git-autocommit-bot/watch.sh -r 'wip-.*.png$' ~/Downloads
    ```
 
    (Note that the regular expression format is best handled by a single-quoted
@@ -72,7 +71,7 @@ I created this instead of using an existing tool like
 
 # How exactly does this work?
 
-When you run the watcher script:
+When you run the `watch.sh` script:
 
 1. An `fswatch` process is created that will watch for the creation of files
    that match the regular expression specified.
@@ -92,6 +91,14 @@ commits and branches via the following git command.
 git push origin --all
 ```
 
+# Why?
+I created this instead of using an existing tool like
+[dura](https://github.com/tkellogg/dura) for two reasons:
+
+1. I wanted a specific type of git history to be created for snapshots that was
+   separate from my actual development commit history.
+2. I like to tinker, and I had a feeling that this was possible with some simple
+   shell script glue.
 
 # Things I Learned Along the Way
 
@@ -126,7 +133,8 @@ Create a (possibly empty) commit on the current branch by automatically
 committing all changes.
 
 ``` sh
-git commit --all --allow-empty --message 'message'
+git add --all
+git commit --allow-empty --message 'message'
 ```
 
 # To Dos
