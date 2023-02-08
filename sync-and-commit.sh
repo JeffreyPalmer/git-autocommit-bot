@@ -8,7 +8,6 @@
 # - That file should ideally have the hash and any other required information in its name
 # SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # echo ${SCRIPT_DIR}
-
 TRIGGER_PATH=$1
 
 # This will remove any path information from the argument
@@ -38,7 +37,9 @@ rsync --quiet --archive --exclude='.git/' --filter=':- .gitignore' ${REPO_DIR}/ 
 
 # Create a commit using the name of the file that triggered this run as the commit message
 # Be sure to allow empty commits as nothing may have changed but we still want to create a commit
-git commit --quiet --all --allow-empty --message ${TRIGGER_FILE}
+# Need to run `git add --all` to ensure that new files are captured because `git commit --all` ignores them
+git add --all
+git commit --quiet --allow-empty --message ${TRIGGER_FILE}
 
 # TODO: Put this behind a verbose flag?
 printf "Created commit for %s\n" ${TRIGGER_FILE}
