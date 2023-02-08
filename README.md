@@ -1,107 +1,126 @@
 # What is this?
-The idea behind this tool is to automatically tag a git repository with
-information relating to a generated file (I use this for generative art) such
-that that output can be tracked and recreated as necessary.
+This tool watches a specified directory for the creation of files with names
+that match a specified pattern, and then automatically creates a git commit in a
+source repository that represents the code that created that file.
 
+I use this while creating generative art projects so that each output created
+during the development process can be tracked back to a specific code/hash
+combination, allowing me to easily recreate them as needed. Since I'm only using
+the filename as the commit message, I put the random number seed into the
+filename so that it's automatically included in the commit message.
 
-# How should it work?
+This is a very basic set of shell scripts, but it solves my specific problem.
+YMMV.
 
-There should either be a config file that is read, or it should accept command line params
-
-When a file is created:
-1. Create a commit in a branch that is specifically for the saving of these
-   types of commits. This branch is a separate history, so that the actual
-   development history is not corrupted by these constant commits.
-2. Always create a commit, even if there have been no code changes since the
-   last commit? Or should a tag be created instead? It's probably better to
-   always have commits that contain the information about the image that was
-   generated, so that it can be easily searched with a single command.
-3. Also, the commit should be pushed to that other branch without any changes to
-   the currently active branch (which would be disruptive to the active
-   development process).
-4. Simply store the name of the file that was created as the commit message,
-   which leaves all of the understanding of that information in the hands of the
-   user.
-
-
-
-   
 # Required Tools
-- [fswatch](https://emcrisostomo.github.io/fswatch/) - Cross-platform filesystem change watcher
-- [Rsync](https://rsync.samba.org/) - Synchronizes different directories
+- [git](https://git-scm.com/) - Source code version control system
+- [fswatch](https://emcrisostomo.github.io/fswatch/) - Cross-platform filesystem
+  change watcher
+- [rsync](https://rsync.samba.org/) - Synchronizes different directories
 
-Probably need to have `homebrew` installed in order to easily get these.
+If you're on MacOS, you can use [`homebrew`](https://brew.sh/) to easily get
+these via `brew install git fswatch rsync`.
 
-# How to Set Things Up
+# Why?
+I created this instead of using an existing tool like
+[dura](https://github.com/tkellogg/dura) for two reasons:
 
-?? Create a script to do all of this?
+1. I want a specific type of git history to be created for snapshots that was
+   separate from my actual development commit history.
+2. I like to tinker, and I had a feeling that this was possible with some simple
+   shell script glue.
 
-1. Use git worktree with a bare repository?
-2. Run a watcher script
+# How to Use
 
-Should also probably have some type of configuration file for the active sync processes?
+1. Clone this repository.
+2. Create a [git worktree](https://git-scm.com/docs/git-worktree) branch of your
+   in-development repository that will be used to record snapshots. I typically
+   create a directory that contains all such repositories, so that they're out
+   of my way when I'm doing other work.
+   
+   For example, if I have a development repository at
+   `~/src/genart/my-new-project`, I create a directory called
+   `~/src/autocommit-repos` that I use to store all of my active worktrees.
+   
+   Once you have a place to create your autocommit worktree, you can create it
+   like this:
 
+   ``` sh
+   cd ~/src/genart/my-new-project
+   git worktree add ~/src/autocommit-repos/my-new-project-autocommits -b autocommits
+   ```
 
-# Notes
+   This command creates an active git worktree of your current repository in the
+   directory `~/src/autocommit-repos/my-new-project-autocommits` and checks out
+   the branch `autocommits` in that repository. (You can name the branch
+   whatever you want - just be sure that it's different from your active branch
+   name.)
+3. Go into this new directory and run the watcher script, providing a regular
+   expression that will match the files that you want to trigger the autocommit
+   snapshot process. 
+   
+   The command format is `watch.sh -r <regex> <directory to watch>`. For
+   example:
 
-## Notes on fswatch
+   ``` sh
+   cd ~/src/autocommit-repos/my-new-project-autocommits
+   ~/src/personal/git-autocommit-bot/watch.sh -r 'wip-.*.png$' ~/Downloads
+   ```
 
-This will only match files that have this naming scheme, and ignore everything else.
+   (Note that the regular expression format is best handled by a single-quoted
+   string specification.)
+
+# How exactly does this work?
+
+When you run the watcher script:
+
+1. An `fswatch` process is created that will watch for the creation of files
+   that match the regular expression specified.
+2. When a matching file is created, an `rsync` process is spawned that will copy
+   everything that isn't ignored by the `.gitignore` file in original repository
+   into your autocommits worktree.
+3. A (potentially empty) commit will be created with the name of the file that
+   was created as the commit message.
+
+That's it.
+
+Because all of these commits are on a separate branch, be sure to include them
+when you push to your remote repository. I typically push all of my local
+commits and branches via the following git command.
 
 ``` sh
-fswatch --event Created -e ".*" -i "wip-.*\\.png$"  ~/Downloads | xargs -I{} echo TEST: {}
+git push origin --all
 ```
 
-## Notes on rsync
 
-Need to be able to completely mirror a directory, based on a signal from the
-directory watcher?
+# Things I Learned Along the Way
+
+## fswatch
+
+`fswatch` requires you to exclude everything (via `-e '.*'`), and then specify the specific
+pattern that should be matched (via `-i '<pattern>'`). This will only match files that have this naming
+scheme, and ignore everything else.
+
+``` sh
+fswatch --event Created -e '.*' -i 'wip-.*.png$' ~/Downloads | xargs -I{} echo TEST: {}
+```
+
+## rsync
 
 The `--exclude='.git/` will exclude the git repository data from the copy, since
 that's not needed.
 
 The `--filter=':- .gitignore'` flag will parse the contents of a `.gitignore`
 file and exclude them from the transfer, avoiding things like copying the
-node_modules directory, etc.
+`node_modules` directory, etc.
 
-(This needs to be run from within the watcher folder.)
+## git worktree
 
-``` sh
-rsync -a --verbose --exclude='.git/' --filter=':- .gitignore' ~/src/personal/generative/vera-examples/ .
-```
+Don't use a bare repository with worktrees inside of them, as that comes with
+some unexpected issues regarding fetching (see [this blog
+post](https://morgan.cugerone.com/blog/workarounds-to-git-worktree-using-bare-repository-and-cannot-fetch-remote-branches/)).
 
-
-## Notes on git worktrees
-
-Should I use a bare repository? 
-
-No - this comes with some unexpected issues regarding fetching (see [this blog
-
-This command will create a repository worktree in a dedicated directory, with a new branch name 'autocommits': 
- 
-``` sh
-git worktree add ../autocommit-repos/vera-examples-watcher -b autocommits
-```
-
-(The `-b` may need to be omitted if the branch already exists.)
-
- bost](https://morgan.cugerone.com/blog/workarounds-to-git-worktree-using-bare-repository-and-cannot-fetch-remote-branches/)
-  for details)
-  
-Maybe recommend a separate directory for all of the change tracking worktree
-repositories?
-
-This command will retrieve the parent directory of the `autocommit` directory,
-assuming that the branch name is `autocommit`:
-
-``` sh
-git worktree list | tr -s " " | grep -v autocommit | cut -d " " -f 
-```
-
-
-Probably should create a specific branch for these commits (configurable?).
-  
-## Notes on git commit creation
+## git commits
 
 Create a (possibly empty) commit on the current branch by automatically
 committing all changes.
@@ -110,11 +129,15 @@ committing all changes.
 git commit --all --allow-empty --message 'message'
 ```
 
-# How to run this
+# To Dos
 
-Notice that the regular expression format is best handled by a single-quoted
-string specification.
+## Notifications
+
+Maybe add support for notifications?
+
+A simple notification can be send from MacOS by running the following command:
 
 ``` sh
-~/src/personal/git-autocommit-bot/watch.sh -r 'wip-.*.png$' ~/Downloads
+osascript -e 'display notification "notification message text"'
 ```
+
