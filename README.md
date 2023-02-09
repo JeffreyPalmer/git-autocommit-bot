@@ -39,9 +39,9 @@ these via `brew install git fswatch rsync`.
 2. Create a [git worktree](https://git-scm.com/docs/git-worktree) branch of your
    in-development repository that will be used to record snapshots. (A worktree
    makes it easy to have another branch checked out in a different directory,
-   while still sharing the version control history.) All changes made to this
-   worktree version will be present in the source repository, so you won't have
-   to push changes from two locations.
+   while still sharing the version control history.) All commits made to this
+   worktree version will be reflected in the original repository, so you won't
+   have to push changes from two locations.
 
    I typically create a directory that contains all such repositories, so that
    they're out of my way when I'm doing other work.
