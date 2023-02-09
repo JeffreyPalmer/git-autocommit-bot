@@ -21,7 +21,7 @@ fi
 # Get the name of the autocommit branch from the current worktree
 BRANCH=`git branch --show-current`
 if [ ! "${BRANCH}" -o "${BRANCH}" == " " ]; then
-    printf "Error: Unable to retrieve current branch name. Is this a git worktree?\n"
+    echo "Error: Unable to retrieve current branch name. Is this a git worktree?"
     exit -1
 fi
 
@@ -30,6 +30,15 @@ fi
 
 # Find the parent repository of this worktree
 REPO_DIR=`git worktree list | tr -s " " | grep -v ${BRANCH} | cut -d " " -f 1`
+if [[ $? -ne 0 ]]; then
+    echo "Error attempting to retrieve the source repository. Aborting"
+    exit -1
+fi
+
+if [ ! "${REPO_DIR}" -o "${REPO_DIR}" == " " -o ! -d "${REPO_DIR}" ]; then
+    echo "Error: source repository couldn't be found. Aborting"
+    exit -1
+fi
 
 # Now, rsync the content of the parent directory to this directory
 # TODO: Check for failure
