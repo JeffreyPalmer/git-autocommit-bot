@@ -17,7 +17,10 @@ so that it's automatically included in the commit message.
 This is a very basic set of shell scripts, but it solves my specific problem.
 YMMV.
 
-NOTE: Only tested on MacOS! Other platforms may require changes.
+# WARNING!
+* This has only been tested on MacOS! Other platforms may require changes.
+* Make sure you're running the script in the correct directory or `rsync` will
+  probably ruin your day.
 
 # Required Tools
 - [git](https://git-scm.com/) - Source code version control system
