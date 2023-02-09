@@ -21,6 +21,8 @@ YMMV.
 * This has only been tested on MacOS! Other platforms may require changes.
 * Make sure you're running the script in the correct directory or `rsync` will
   probably ruin your day.
+* This also assumes that you don't have more than two git worktree branches for
+  a specific repository.
 
 # Required Tools
 - [git](https://git-scm.com/) - Source code version control system
@@ -35,9 +37,14 @@ these via `brew install git fswatch rsync`.
 
 1. Clone this repository onto your machine.
 2. Create a [git worktree](https://git-scm.com/docs/git-worktree) branch of your
-   in-development repository that will be used to record snapshots. I typically
-   create a directory that contains all such repositories, so that they're out
-   of my way when I'm doing other work.
+   in-development repository that will be used to record snapshots. (A worktree
+   makes it easy to have another branch checked out in a different directory,
+   while still sharing the version control history.) All changes made to this
+   worktree version will be present in the source repository, so you won't have
+   to push changes from two locations.
+
+   I typically create a directory that contains all such repositories, so that
+   they're out of my way when I'm doing other work.
    
    For example, if I have a development repository at
    `~/src/genart/my-new-project`, I create a directory called
