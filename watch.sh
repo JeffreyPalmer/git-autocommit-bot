@@ -31,5 +31,28 @@ if [ ! "${REGEX}" -o "${REGEX}" == " " ]; then
     exit -1
 fi
 
-printf "Watching '%s'\nPress Ctrl-C to stop.\n" ${WATCH_DIR}
+# Get the name of the autocommit branch from the current worktree
+BRANCH=`git branch --show-current`
+if [ ! "${BRANCH}" -o "${BRANCH}" == " " ]; then
+    echo "Error: Unable to retrieve current branch name. Is this a git worktree? Aborting."
+    exit -1
+fi
+
+AUTOCOMMIT_DIR=`git worktree list | tr -s " " | grep "\[${BRANCH}\]" | cut -d " " -f 1`
+
+# Find the parent repository of this worktree
+REPO_DIR=`git worktree list | tr -s " " | grep -v "\[${BRANCH}\]" | cut -d " " -f 1`
+if [[ $? -ne 0 ]]; then
+    echo "Error attempting to retrieve the source repository. Aborting"
+    exit -1
+fi
+
+if [ ! "${REPO_DIR}" -o "${REPO_DIR}" == " " -o ! -d "${REPO_DIR}" ]; then
+    echo "Error: source repository couldn't be found. Aborting"
+    exit -1
+fi
+
+printf "Source repo     : %s\n" ${REPO_DIR}
+printf "Autocommit repo : %s\n" ${AUTOCOMMIT_DIR}
+printf "\nWatching '%s'\nPress Ctrl-C to stop.\n" ${WATCH_DIR}
 fswatch --event Created -e '.*' -i "${REGEX}" ${WATCH_DIR} | xargs -I{} ${SCRIPT_DIR}/sync-and-commit.sh {}

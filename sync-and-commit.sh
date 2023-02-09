@@ -29,7 +29,7 @@ fi
 
 
 # Find the parent repository of this worktree
-REPO_DIR=`git worktree list | tr -s " " | grep -v ${BRANCH} | cut -d " " -f 1`
+REPO_DIR=`git worktree list | tr -s " " | grep -v "\[${BRANCH}\]" | cut -d " " -f 1`
 if [[ $? -ne 0 ]]; then
     echo "Error attempting to retrieve the source repository. Aborting"
     exit -1
@@ -43,6 +43,10 @@ fi
 # Now, rsync the content of the parent directory to this directory
 # TODO: Check for failure
 rsync --quiet --archive --exclude='.git/' --filter=':- .gitignore' ${REPO_DIR}/ .
+if [[ $? -ne 0 ]]; then
+    echo "Error syncing source repository. Aborting"
+    exit -1
+fi
 
 # Create a commit using the name of the file that triggered this run as the commit message
 # Be sure to allow empty commits as nothing may have changed but we still want to create a commit
