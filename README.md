@@ -19,8 +19,6 @@ YMMV.
 
 # WARNING!
 * This has only been tested on MacOS! Other platforms may require changes.
-* Make sure you're running the script in the correct directory or `rsync` will
-  probably ruin your day.
 * This also assumes that you don't have more than two git worktree branches for
   a specific repository.
 
