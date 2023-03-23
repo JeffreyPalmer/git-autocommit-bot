@@ -8,11 +8,11 @@ set -o pipefail  # don't hide errors within pipes
 #
 # TODO: Add error checking
 #
-# The parameter to this script is the name of the file that triggered the script to run
+# The first parameter of this script is the source repository directory
+# The second parameter to this script is the name of the file that triggered the script to run
 # - That file should ideally have the hash and any other required information in its name
-# SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-# echo ${SCRIPT_DIR}
-TRIGGER_PATH=$1
+REPO_DIR=$1
+TRIGGER_PATH=$2
 
 # This will remove any path information from the argument
 TRIGGER_FILE=${TRIGGER_PATH##*/}
@@ -22,18 +22,7 @@ if [ ! "${TRIGGER_FILE}" -o "${TRIGGER_FILE}" == " " ]; then
     exit -1
 fi
 
-# Get the name of the autocommit branch from the current worktree
-BRANCH=$(git branch --show-current)
-if [ ! "${BRANCH}" -o "${BRANCH}" == " " ]; then
-    echo "Error: Unable to retrieve current branch name. Is this a git worktree?"
-    exit -1
-fi
-
-# TODO: Add a check to make sure that this is not the main branch?
-
-
-# Find the parent repository of this worktree
-REPO_DIR=$(git worktree list | tr -s " " | grep -v "\[${BRANCH}\]" | cut -d " " -f 1)
+# Double-check the parent repository of this worktree
 if [ ! "${REPO_DIR}" -o "${REPO_DIR}" == " " -o ! -d "${REPO_DIR}" ]; then
     echo "Error: source repository couldn't be found. Aborting"
     exit -1

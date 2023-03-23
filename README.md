@@ -66,8 +66,8 @@ these via `brew install git fswatch rsync`.
    expression that will match the files that you want to trigger the autocommit
    snapshot process. 
    
-   The command format is `watch.sh -r <regex> <directory to watch>`. For
-   example:
+   The command format is `watch.sh -r <regex> -b <branch> <directory to watch>`.
+   For example:
 
    ``` sh
    cd ~/src/autocommit-repos/my-new-project-autocommits
@@ -76,6 +76,10 @@ these via `brew install git fswatch rsync`.
 
    (Note that the regular expression format is best handled by a single-quoted
    string specification.)
+
+   Specifying the -b <branch> option will tell the script to use the worktree
+   associated with that branch as the source repository. If not specified, the
+   the source branch will default to "main".
 
 # How exactly does this work?
 
